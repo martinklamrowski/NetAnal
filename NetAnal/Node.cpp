@@ -1,5 +1,5 @@
 #include <iostream>
-#include <sstream>
+#include <vector>
 #include "Node.h"
 using namespace std;
 
@@ -10,4 +10,3 @@ Node::Node(string aName, int aEnd, int aBeg) {
 	
 	cout << "Node " << name << " created." << endl;
 }
-
