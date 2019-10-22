@@ -56,7 +56,8 @@ int main() {
 	*/
 	nodes = parsefile("sample_network.txt");
 
-	cout << nodes.find("A")->first << endl; // should print A
+
+	//cout << typeid(nodes.find("A")).name() << endl; // should print A
 
 	//cout << nodes.at(1).name << endl;
 	//cout << nodes.at(2).name << endl;
@@ -64,8 +65,8 @@ int main() {
 	//cout << nodes.at(4).name << endl;
 
 	// create a network analysis object for this network
-	NetAnal network = NetAnal(nodes, "O", "T");
-
+	NetAnal network = NetAnal(nodes, "O", "G");
+	network.shortestpath();
 
 	return 0;
 }
