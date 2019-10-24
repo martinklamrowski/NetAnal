@@ -68,5 +68,9 @@ int main() {
 	NetAnal network = NetAnal(nodes, "O", "G");
 	network.shortestpath();
 
+
+	//TODO remove
+	cin.get();
+
 	return 0;
 }
