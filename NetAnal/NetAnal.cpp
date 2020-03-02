@@ -1,70 +1,91 @@
-// NetAnal.cpp : This file contains the NetAnal class.
-//
-#include <iostream>
-#include <vector>
-#include <unordered_map>
-#include "Node.h"
 #include "NetAnal.h"
-using namespace std;
 
-NetAnal::NetAnal(unordered_map<string, Node> aNodes, string aBeg, string aEnd) {
-	nodes = aNodes;
-	beg = aBeg;
-	end = aEnd;
+wxBEGIN_EVENT_TABLE(NetAnal, wxMDIParentFrame)
+EVT_MENU(10001, NetAnal::onMenuNew)
+EVT_MENU(10002, NetAnal::onMenuOpen)
+EVT_MENU(10003, NetAnal::onMenuSave)
+EVT_MENU(10004, NetAnal::onMenuExit)
+wxEND_EVENT_TABLE()
+
+NetAnal::NetAnal() : wxMDIParentFrame(nullptr, wxID_ANY, "Network Editor", wxPoint(30, 30), wxSize(800, 600))
+{
+
+	// add a menu bar
+	menubar = new wxMenuBar();
+	this->SetMenuBar(menubar);
+
+	// add menu for file operations
+	wxMenu* menuFile = new wxMenu();
+	menuFile->Append(10001, "New");
+	menuFile->Append(10002, "Open");
+	menuFile->Append(10003, "Save");
+	menuFile->Append(10004, "Exit");
+
+	// add file menu to menu bar
+	menubar->Append(menuFile, "File");
+
+	// add a toolbar for pallette
+	toolbar = this->CreateToolBar(wxTB_HORIZONTAL, wxID_ANY);
+	
+	// adding buttons
+	wxButton* nodebutton = new wxButton(toolbar, 10100, "Node", wxDefaultPosition, wxSize(40, 24), 0);
+	nodebutton->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(NetAnal::onSelectTool), nullptr, this);
+	toolbar->AddControl(nodebutton);
+
+	wxButton* linkbutton = new wxButton(toolbar, 10101, "Link", wxDefaultPosition, wxSize(40, 24), 0);
+	linkbutton->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(NetAnal::onSelectTool), nullptr, this);
+	toolbar->AddControl(linkbutton);
+
+	toolbar->Realize();
 }
 
-/*
-Finds the length of the shortest path between the start and end node.
-*/
-int NetAnal::shortestpath() {
-	
-	unordered_map<string, Node>::const_iterator current_node = nodes.find(beg);	// iterator to the current node pair
-	unordered_map<string, Node>::const_iterator end_node = nodes.find(end);		// iterator to the end node 
+NetAnal::~NetAnal()
+{
 
-	unordered_map<string, int> solved_nodes = { {beg, 0} };						// {node name, candidate distance from start}
-	unordered_map<string, int> arc_set;											// {arc name, arc length}
-	
-	vector<pair<string, int>> neighbours;										// <name of neighbour, distance from current node>
-	pair<string, int> closest_neighbour;										// <current closest neighbour, distance from current node>
+}
 
-	int candidate_distance;
-	int reached_target = 0;
-	int solved_node = 0;
+void NetAnal::onMenuNew(wxCommandEvent& evt)
+{
+	Editor* f = new Editor(this, "test");
+	f->Show();
+	evt.Skip();
+}
 
-	while (!reached_target) {
+void NetAnal::onMenuOpen(wxCommandEvent& evt)
+{
+	wxFileDialog dlg(this, "Open Network File", "", "", ".netanal Files (*.netanal)|*.netanal", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	if (dlg.ShowModal() == wxID_OK)
+	{
+		Editor* f = new Editor(this, dlg.GetPath());
+		f->open(dlg.GetPath());
+		f->Show();
+	}
+	evt.Skip();
+}
 
-		for (unordered_map<string, int>::const_iterator s = solved_nodes.begin(); s != solved_nodes.end(); s++) {
-			current_node = nodes.find(s->first);
-			neighbours = (current_node->second).neighbours;
-
-			for (vector<pair<string, int>>::const_iterator n = neighbours.begin(); n != neighbours.end(); n++) {
-				
-				// check if neighbour is already solved
-				if (!(solved_nodes.count(n->first))) {
-					// is not a solved node so compute candidate distance
-					candidate_distance = n->second + s->second;
-					if (candidate_distance < closest_neighbour.second || closest_neighbour.second == 0) {
-						closest_neighbour = pair<string, int> (n->first, candidate_distance);
-
-						if (n->first == end_node->first) {
-							reached_target = 1;
-						}
-					}
-				}
-			}
-		}
-		solved_nodes.emplace(closest_neighbour);
-		closest_neighbour = pair<string, int>("", 0);
-		
-		cout << "SOLVED NODES:" << endl;
-		for (unordered_map<string, int>::const_iterator test = solved_nodes.begin(); test != solved_nodes.end(); test++) {
-			cout << test->first << test->second << endl;
+void NetAnal::onMenuSave(wxCommandEvent& evt)
+{
+	if (GetActiveChild() != nullptr)
+	{
+		wxFileDialog dlg(this, "Save Network File", "", "", ".netanal Files (*.netanal)|*.netanal", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+		if (dlg.ShowModal() == wxID_OK)
+		{
+			((Editor*)GetActiveChild())->save(dlg.GetPath());
 		}
 	}
+}
 
-	
-	
-	
-	
-	return 1;
+void NetAnal::onMenuExit(wxCommandEvent& evt)
+{
+	Close();
+	evt.Skip();
+}
+
+void NetAnal::onSelectTool(wxCommandEvent& evt)
+{
+	int tool = evt.GetId() - 10100;
+	if (GetActiveChild() != nullptr)
+	{
+		((Editor*)GetActiveChild())->setTool(tool);
+	}
 }

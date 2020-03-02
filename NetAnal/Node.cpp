@@ -1,12 +1,29 @@
-#include <iostream>
-#include <vector>
 #include "Node.h"
-using namespace std;
 
-Node::Node(string aName, int aEnd, int aBeg) {
-	name = aName;
-	end = aEnd;
-	beg = aBeg;
-	
-	cout << "Node " << name << " created." << endl;
+
+Node::Node(char name, int posx, int posy)
+{
+	this->name = name;
+	this->posx = posx;
+	this->posy = posy;
+	selected = false;
 }
+Node::~Node()
+{
+
+}
+
+bool Node::addNeighbour(char neighbour)
+{
+	if (neighbours.count(neighbour))
+	{
+		return false; // will return false if add failed
+	}
+	else
+	{
+		neighbours.emplace(neighbour);
+		return true;
+	}
+}
+
+
