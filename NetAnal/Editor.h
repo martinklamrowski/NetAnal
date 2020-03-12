@@ -1,7 +1,6 @@
 #pragma once
 #include "wx/wx.h"
 #include "Canvas.h"
-#include "olcSprite.h"
 
 class Editor : public wxMDIChildFrame
 {

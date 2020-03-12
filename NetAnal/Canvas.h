@@ -20,7 +20,7 @@ private:
 	int sourcey = -1;
 	Node* selectedNode = nullptr;						// dummy node to start
 
-	std::vector<Node> nodes;
+	std::unordered_map<char, Node> nodes;
 	std::vector<std::pair<wxPoint, wxPoint>> linkPoints;
 
 	unsigned char* sprite = nullptr;
@@ -28,9 +28,9 @@ private:
 
 public:
 	void setPixelSize(int n);
-	void setNetworkData(std::vector<Node> nodes, std::vector<std::pair<wxPoint, wxPoint>> linkPoints);
+	void setNetworkData(std::unordered_map<char, Node> nodes, std::vector<std::pair<wxPoint, wxPoint>> linkPoints);
 	void setTool(int t);
-	std::vector<Node> getNetworkNodeData();
+	std::unordered_map<char, Node> getNetworkNodeData();
 	std::vector<std::pair<wxPoint, wxPoint>> getNetworkLinkData();
 
 private:

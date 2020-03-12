@@ -1,4 +1,5 @@
 #include "Editor.h"
+#include "fstream"
 
 wxBEGIN_EVENT_TABLE(Editor, wxMDIChildFrame)
 EVT_SLIDER(20001, Editor::OnZoomChange)
@@ -23,31 +24,51 @@ void Editor::setTool(int t)
 
 bool Editor::save(wxString fileName)
 {
-	std::wstring file = fileName.wc_str();
-	FILE* f = nullptr;
-	_wfopen_s(&f, file.c_str(), L"wb");
-	if (f == nullptr)
-		return false;
+	std::ofstream outstream(fileName.ToStdString());
+	
+	std::unordered_map<char, Node> writeNodes = canvas->getNetworkNodeData();
+	std::vector<std::pair<wxPoint, wxPoint>> writeLinkPoints = canvas->getNetworkLinkData();
 
-	fwrite(&canvas->getNetworkNodeData(), sizeof(std::vector<Node>), 1, f);
-	fwrite(&canvas->getNetworkLinkData(), sizeof(std::vector<std::pair<wxPoint, wxPoint>>), 1, f);
+	for (std::unordered_map<char, Node>::const_iterator nodeit = writeNodes.begin(); nodeit != writeNodes.end(); nodeit++)
+	{
+		std::unordered_map<char, double> neighbours = nodeit->second.neighbours;
+		outstream << nodeit->second.name << " " << nodeit->second.posx << " " << nodeit->second.posy << " " << nodeit->second.beg << " " << nodeit->second.end << " " << nodeit->second.neighbours.size() << std::endl;
 
-	fclose(f);
+		for (std::unordered_map<char, double>::const_iterator neighbourit = neighbours.begin(); neighbourit != neighbours.end(); neighbourit++) 
+		{
+			outstream << neighbourit->first << " " << neighbourit->second << std::endl;
+		}
+	}
+
 	return true;
 }
 
 bool Editor::open(wxString fileName)
 {
-	std::wstring file = fileName.wc_str();
-	FILE* f = nullptr;
-	_wfopen_s(&f, file.c_str(), L"rb");
-	if (f == nullptr)
-		return false;
+	char name, neighbourName;
+	int posx, posy, beg, end, numNeighbours;
+	double dist;
+	
+	std::ifstream instream(fileName.ToStdString());	
 
-	std::fread(&width, sizeof(int), 1, f);
-	std::fread(&height, sizeof(int), 1, f);
+	std::unordered_map<char, Node> readNodes;
+	std::vector<std::pair<wxPoint, wxPoint>> readLinkPoints;
+	
+	while (instream >> name >> posx >> posy >> beg >> end >> numNeighbours) 
+	{
+		Node readNode = Node(name, posx, posy, beg, end);		
+		
+		for (int n = 0; n < numNeighbours; n++) 
+		{
+			instream >> neighbourName >> dist;
+			readNode.addNeighbour(neighbourName, dist);
+		}
+		readNodes.emplace(name, readNode);
+	}
+	canvas->setNetworkData(readNodes, readLinkPoints);
 
-	std::fclose(f);
+	instream.close();
+
 	return true;
 }
 

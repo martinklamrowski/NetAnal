@@ -1,19 +1,21 @@
 #pragma once
 
-#include "unordered_set"
+#include "unordered_map"
 
 class Node
 {
 public:
-	Node(char name, int posx, int posy);
+	Node(char name, int posx, int posy, int beg, int end);
 	~Node();
 
 	char name;
 	int posx;
 	int posy;
+	int beg;
+	int end;
 	bool selected;
-	std::unordered_set<char> neighbours;
+	std::unordered_map<char, double> neighbours;
 
-	bool addNeighbour(char neighbour);
+	bool addNeighbour(char neighbour, double dist);
 };
 

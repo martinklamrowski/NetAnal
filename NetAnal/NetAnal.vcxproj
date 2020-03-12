@@ -31,7 +31,6 @@
     <ClInclude Include="Editor.h" />
     <ClInclude Include="NetAnal.h" />
     <ClInclude Include="Node.h" />
-    <ClInclude Include="olcSprite.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

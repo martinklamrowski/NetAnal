@@ -32,13 +32,13 @@ void Canvas::setPixelSize(int n)
 	Refresh();
 }
 
-void Canvas::setNetworkData(std::vector<Node> nodes, std::vector<std::pair<wxPoint, wxPoint>> linkPoints)
+void Canvas::setNetworkData(std::unordered_map<char, Node> nodes, std::vector<std::pair<wxPoint, wxPoint>> linkPoints)
 {
 	this->nodes = nodes;
 	this->linkPoints = linkPoints;
 }
 
-std::vector<Node> Canvas::getNetworkNodeData()
+std::unordered_map<char, Node> Canvas::getNetworkNodeData()
 {
 	return nodes;
 }
@@ -72,6 +72,7 @@ void Canvas::OnDraw(wxDC& dc)
 	pen.SetColour(wxColour(255, 0, 0));
 	dc.SetPen(pen);
 
+	// LINE DRAWING
 	if (pixelsize <= 4) dc.SetPen(*wxTRANSPARENT_PEN);	
 
 	for (std::vector<std::pair<wxPoint, wxPoint>>::const_iterator it = linkPoints.begin(); it != linkPoints.end(); it++)
@@ -83,19 +84,21 @@ void Canvas::OnDraw(wxDC& dc)
 	pen.SetColour(wxColour(0, 0, 255));
 	dc.SetPen(pen);
 
+	// NODE DRAWING
 	if (pixelsize <= 4) dc.SetPen(*wxTRANSPARENT_PEN);
 
-	for (std::vector<Node>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
+	for (std::unordered_map<char, Node>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
 	{
-		if (it->selected) {
+		Node currentNode = it->second;
+		if (currentNode.selected) {
 			pen.SetColour(wxColour(255, 128, 0));
 			dc.SetPen(pen);
-			dc.DrawCircle(it->posx, it->posy, 32);
+			dc.DrawCircle(currentNode.posx, currentNode.posy, 32);
 		}
 		pen.SetColour(wxColour(0, 0, 255));
 		dc.SetPen(pen);
-		dc.DrawCircle(it->posx, it->posy, 30);
-		dc.DrawText(wxString(it->name), wxPoint(it->posx - 8, it->posy - 8));
+		dc.DrawCircle(currentNode.posx, currentNode.posy, 30);
+		dc.DrawText(wxString(currentNode.name), wxPoint(currentNode.posx - 7, currentNode.posy - 7));
 	}
 }
 
@@ -116,29 +119,35 @@ void Canvas::onMouseLeftDown(wxMouseEvent& evt)
 	{ // link selected
 		bool goodClick = false;
 
-		for (std::vector<Node>::iterator it = nodes.begin(); it != nodes.end(); it++)
+		for (std::unordered_map<char, Node>::iterator it = nodes.begin(); it != nodes.end(); it++)
 		{ 
-			if (sqrt(pow(x - it->posx, 2) + pow(y - it->posy, 2)) < 30)
+			Node currentNode = it->second;
+			
+			if (sqrt(pow(x - currentNode.posx, 2) + pow(y - currentNode.posy, 2)) < 30)
 			{ // click was in a node
-				
+
 				if (sourceSelected)
 				{ // a source node was selected in a previous iteration
 					
-					if (sqrt(pow(x - sourcey, 2) + pow(y - sourcey, 2)) >= 30)
-					{ // click was not in source node
-						
-						std::pair<wxPoint, wxPoint> newPoints = std::pair<wxPoint, wxPoint>(wxPoint(it->posx, it->posy), wxPoint(sourcex, sourcey));
-						linkPoints.push_back(newPoints);
+					if (sqrt(pow(x - sourcex, 2) + pow(y - sourcey, 2)) >= 30)
+					{ // click was not in source node						
+						if (!(currentNode.neighbours.count(selectedNode->name))) {
+							std::pair<wxPoint, wxPoint> newPoints = std::pair<wxPoint, wxPoint>(wxPoint(currentNode.posx, currentNode.posy), wxPoint(sourcex, sourcey));
+							linkPoints.push_back(newPoints);
+
+							// add nodes to each others neighbours map
+							currentNode.addNeighbour(selectedNode->name, 0);
+							selectedNode->addNeighbour(currentNode.name, 0);
+						}				
 					}
 				}
 				else
-				{ // no source node was selected previously
-					
-					sourcex = it->posx;
-					sourcey = it->posy;
-					it->selected = true;
+				{ // no source node was selected previously					
+					sourcex = currentNode.posx;
+					sourcey = currentNode.posy;
+					currentNode.selected = true;
 					sourceSelected = true;	
-					selectedNode = &*it;
+					selectedNode = &currentNode;
 					goodClick = true;
 				}				
 				break;
@@ -155,18 +164,18 @@ void Canvas::onMouseLeftDown(wxMouseEvent& evt)
 	else
 	{
 		// checking bounds for new Node add
-		for (std::vector<Node>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
+		for (std::unordered_map<char, Node>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
 		{
-			if (sqrt(pow(x - it->posx, 2) + pow(y - it->posy, 2)) < 60)
+			Node currentNode = it->second;
+			if (sqrt(pow(x - currentNode.posx, 2) + pow(y - currentNode.posy, 2)) < 60)
 			{
 				return;
 			}
 		}
-		Node newNode = Node(static_cast<char>(lastNodeName++), x, y);
-		nodes.push_back(newNode);
+		Node newNode = Node(static_cast<char>(lastNodeName++), x, y, 0, 0);
+		nodes.emplace(newNode.name, newNode);
 	}
 		
-	
 	this->Refresh(false);
 	evt.Skip();
 }
